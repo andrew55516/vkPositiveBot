@@ -18,18 +18,12 @@ type message struct {
 }
 
 type sendMessage struct {
-	AccessToken string `json:"access_token"`
-	UserID      int64  `json:"user_id"`
-	RandomID    int32  `json:"random_id"`
-	PeerId      int64  `json:"peer_id"`
-	Message     string `json:"message"`
-	V           string `json:"v"`
-}
-
-type callbackConfirmationRequest struct {
-	AccessToken string `json:"access_token"`
-	GroupID     int64  `json:"group_id"`
-	V           string `json:"v"`
+	//AccessToken string `json:"access_token"`
+	UserID   int64  `json:"user_id"`
+	RandomID int32  `json:"random_id"`
+	PeerId   int64  `json:"peer_id"`
+	Message  string `json:"message"`
+	//V           string `json:"v"`
 }
 
 type callbackConfirmationResponse struct {

@@ -23,7 +23,7 @@ func main() {
 	APP_PORT := os.Getenv("APP_PORT")
 
 	fmt.Println(APP_IP + ":" + APP_PORT)
-	//log.Fatal(http.ListenAndServe(APP_IP+":"+APP_PORT, nil))
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(APP_IP+":"+APP_PORT, nil))
+	//log.Fatal(http.ListenAndServe(":8080", nil))
 
 }

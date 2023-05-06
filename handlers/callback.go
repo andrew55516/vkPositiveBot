@@ -16,6 +16,7 @@ const (
 	sendMessageURL                 = "https://api.vk.com/method/messages.send"
 	getCallbackConfirmationCodeURL = "https://api.vk.com/method/groups.getCallbackConfirmationCode"
 	API_VERSION                    = "5.131"
+	ConfirmationCode               = "39e324a8"
 )
 
 func HandleCallback(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +42,6 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 			return
 		}
-
 		_, err = fmt.Fprintf(w, confCode)
 		if err != nil {
 			log.Fatal(err)
@@ -64,18 +64,22 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func callbackConfirmation(groupID int64) (confCode string, err error) {
-	c := callbackConfirmationRequest{
-		AccessToken: TOKEN,
-		GroupID:     groupID,
-		V:           API_VERSION,
-	}
+	//c := callbackConfirmationRequest{
+	//	AccessToken: TOKEN,
+	//	GroupID:       groupID,
+	//	V:             API_VERSION,
+	//}
 
-	data, err := json.Marshal(c)
-	if err != nil {
-		return
-	}
+	//data, err := json.Marshal(c)
+	//if err != nil {
+	//	return
+	//}
 
-	r, err := http.Post(getCallbackConfirmationCodeURL, "application/json", bytes.NewBuffer(data))
+	//r, err := http.Post(getCallbackConfirmationCodeURL, "application/json", bytes.NewBuffer(data))
+	url := fmt.Sprintf("%s?access_token=%s&group_id=%d&v=%s",
+		getCallbackConfirmationCodeURL, TOKEN, groupID, API_VERSION)
+	fmt.Println(url)
+	r, err := http.Get(url)
 	defer r.Body.Close()
 
 	if err != nil {
@@ -108,22 +112,22 @@ func newMessage(m message) error {
 	switch m.Text {
 	case "ping":
 		response = sendMessage{
-			AccessToken: TOKEN,
-			UserID:      m.FromId,
-			RandomID:    rand.Int31(),
-			PeerId:      m.PeerId,
-			Message:     "pong",
-			V:           API_VERSION,
+			//AccessToken: TOKEN,
+			UserID:   m.FromId,
+			RandomID: rand.Int31(),
+			PeerId:   m.PeerId,
+			Message:  "pong",
+			//V:           API_VERSION,
 		}
 
 	default:
 		response = sendMessage{
-			AccessToken: TOKEN,
-			UserID:      m.FromId,
-			RandomID:    rand.Int31(),
-			PeerId:      m.PeerId,
-			Message:     "Hi!",
-			V:           API_VERSION,
+			//AccessToken: TOKEN,
+			UserID:   m.FromId,
+			RandomID: rand.Int31(),
+			PeerId:   m.PeerId,
+			Message:  "Hi!",
+			//V:           API_VERSION,
 		}
 	}
 
@@ -132,7 +136,22 @@ func newMessage(m message) error {
 		return err
 	}
 
-	_, err = http.Post(sendMessageURL, "application/json", bytes.NewBuffer(data))
+	url := fmt.Sprintf("%s?access_token=%s&random_id=%d&user_id=%d&peer_id=%d&message=%s&v=%s",
+		sendMessageURL, TOKEN, rand.Int31(), m.FromId, m.PeerId, response.Message, API_VERSION)
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(data))
+	defer resp.Body.Close()
+
+	if err != nil {
+		return err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(body))
 
 	return err
 }
