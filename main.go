@@ -11,7 +11,7 @@ const ()
 
 func main() {
 	http.HandleFunc("/callback", hadleCallback)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":5555", nil))
 }
 
 func hadleCallback(w http.ResponseWriter, r *http.Request) {
@@ -33,12 +33,12 @@ func hadleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if conf.Type == "confirmation" && conf.GroupId == 220370106 {
-		_, err = w.Write([]byte("cebe8dbb"))
+		_, err = w.Write([]byte("e048fbdb"))
 		if err != nil {
 			log.Fatal(err)
 			return
 		}
 	}
-	
+
 	return
 }
