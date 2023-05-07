@@ -1,0 +1,231 @@
+package callback
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"math/rand"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+)
+
+const (
+	confirmationCode               = "dd0250ed"
+	TOKEN                          = "vk1.a.wUDWptIgLrdDUB4gOC8Qlo1S4xCp5FdPyX8gEhIQlWJwAMV-ntyvlXA8pMdO5HBnQMNM3rziPJafUVv9qAB_CznfcSpbbXjEmT1e-UMwVZqJQcIBhkHzxVWsLWwvzHWbD2GXN7wrCg-cbuZvgbABFDIZy2-bO6cwAI2GqJHQxMpkIAMIKqGxoj-Q9ZB8RIdRP3Cyk94uJWmDDm2-fme8cw"
+	sendMessageAPI                 = "https://api.vk.com/method/messages.send"
+	getCallbackConfirmationCodeAPI = "https://api.vk.com/method/groups.getCallbackConfirmationCode"
+	EventAnswerAPI                 = "https://api.vk.com/method/messages.sendMessageEventAnswer"
+	API_VERSION                    = "5.131"
+	startMessage                   = "Привет, я бот для поднятия настроения!"
+)
+
+func HandleCallback(w http.ResponseWriter, r *http.Request) {
+	var m message
+	var callback callback
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	r.Body.Close()
+
+	err = json.Unmarshal(body, &callback)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	switch callback.Type {
+	case "confirmation":
+		//log.Println("confirmation", callback.GroupID)
+		//confCode, err := callbackConfirmation(callback.GroupID)
+		//if err != nil {
+		//	log.Fatal(err)
+		//	return
+		//}
+		_, err = fmt.Fprintf(w, confirmationCode)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+
+	case "message_new":
+		_, err = fmt.Fprintf(w, "ok")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		m = callback.Object.Message
+
+	case "group_join":
+		_, err = fmt.Fprintf(w, "ok")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		m = message{
+			PeerID: callback.Object.PeerID,
+			FromID: callback.Object.UserID,
+			Text:   "Начать",
+		}
+
+	case "message_event":
+		_, err = fmt.Fprintf(w, "ok")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		ans := eventAnswer{
+			EventID: callback.Object.EventID,
+			UserID:  callback.Object.UserID,
+			PeerID:  callback.Object.PeerID,
+			EventData: eventData{
+				Type: "show_snackbar",
+				Text: eventAnswerText[rand.Intn(len(eventAnswerText))],
+			},
+		}
+
+		ansData := setupURLEncoded(ans)
+
+		_, err = http.Post(APIRequest(EventAnswerAPI),
+			"application/x-www-form-urlencoded", strings.NewReader(ansData))
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		m = message{
+			PeerID: callback.Object.PeerID,
+			FromID: callback.Object.UserID,
+			Text:   callback.Object.Payload.Button,
+		}
+	}
+
+	err = newMessage(m)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+func callbackConfirmation(groupID int64) (confCode string, err error) {
+	callbackURL := callbackConfirmationReq(groupID)
+	r, err := http.Get(callbackURL)
+	defer r.Body.Close()
+
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return
+	}
+
+	var response callbackConfirmationResponse
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return
+	}
+
+	confCode = response.Response.Code
+	return
+}
+
+func newMessage(m message) error {
+	rand.Seed(time.Now().UnixNano())
+
+	var data, keyboardKey string
+	responseMessage := sendMessage{
+		UserID:   m.FromID,
+		RandomID: rand.Int31(),
+		PeerID:   m.PeerID,
+	}
+
+	switch m.Text {
+	case "ping":
+		responseMessage.Message = "pong"
+
+	case "Начать":
+		responseMessage.Message = startMessage
+		keyboardKey = "start"
+
+	case "cat", "dog":
+		// TODO: cat/dog pic
+		responseMessage.Message = "https://images.unsplash.com/photo-1583083527882-4bee9aba2eea?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Nnx8Y3V0ZSUyMGNhdHxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60"
+
+	case "quote":
+		// TODO: quote
+		responseMessage.Message = "some quote..."
+
+	case "birthday", "new year":
+		// TODO: birthday or new year
+		responseMessage.Message = "happy birthday or new year!"
+
+	default:
+		if _, ok := messagesText[m.Text]; ok {
+			responseMessage.Message = messagesText[m.Text]
+
+			if _, ok := keyboards[m.Text]; ok {
+				keyboardKey = m.Text
+			}
+
+		} else {
+			responseMessage.Message = messagesText["help"]
+		}
+	}
+
+	if keyboardKey != "" {
+		data = setupURLEncoded(responseMessage, keyboards[keyboardKey])
+	} else {
+		data = setupURLEncoded(responseMessage)
+	}
+
+	sendMessageURL := APIRequest(sendMessageAPI)
+
+	log.Println(sendMessageURL)
+
+	resp, err := http.Post(sendMessageURL, "application/x-www-form-urlencoded", strings.NewReader(data))
+	defer resp.Body.Close()
+
+	if err != nil {
+		return err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	log.Println(string(body))
+
+	return err
+}
+
+func APIRequest(startURL string) string {
+	return fmt.Sprintf("%s?access_token=%s&v=%s",
+		startURL, TOKEN, API_VERSION)
+}
+
+func callbackConfirmationReq(groupID int64) string {
+	return fmt.Sprintf("%s?access_token=%s&group_id=%d&v=%s",
+		getCallbackConfirmationCodeAPI, TOKEN, groupID, API_VERSION)
+}
+
+func setupURLEncoded(encodings ...Encoding) string {
+	data := url.Values{}
+	for _, e := range encodings {
+		temp := e.URLEncoded()
+		for k, v := range temp {
+			for _, vv := range v {
+				data.Add(k, vv)
+			}
+		}
+	}
+
+	return data.Encode()
+}

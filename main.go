@@ -5,13 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"vkPositiveBot/handlers"
+	"vkPositiveBot/callback"
 )
 
-const ()
-
 func main() {
-	http.HandleFunc("/callback", handlers.HandleCallback)
+	http.HandleFunc("/callback", callback.HandleCallback)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Welcome")
 	})
