@@ -59,6 +59,7 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 		_, err = fmt.Fprintf(w, "ok")
 		if err != nil {
 			sendErrMsg(err)
+			return
 		}
 
 		m = callback.Object.Message
@@ -67,6 +68,7 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 		_, err = fmt.Fprintf(w, "ok")
 		if err != nil {
 			sendErrMsg(err)
+			return
 		}
 
 		m = message{
@@ -79,6 +81,7 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 		_, err = fmt.Fprintf(w, "ok")
 		if err != nil {
 			sendErrMsg(err)
+			return
 		}
 
 		ans := eventAnswer{
@@ -93,11 +96,33 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 
 		ansData := setupURLEncoded(ans)
 
-		_, err = http.Post(APIRequest(EventAnswerAPI),
+		resp, err := http.Post(APIRequest(EventAnswerAPI),
 			"application/x-www-form-urlencoded", strings.NewReader(ansData))
+		defer resp.Body.Close()
 
 		if err != nil {
 			sendErrMsg(err)
+			return
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			sendErrMsg(err)
+			return
+		}
+
+		var vkResp vkResponse
+		if err = json.Unmarshal(body, &vkResp); err != nil {
+			sendErrMsg(err)
+			return
+		}
+
+		if vkResp.Error.ErrorCode != 0 {
+			sendErrMsg(fmt.Errorf("eventAnswer error: %d: %s\n %v",
+				vkResp.Error.ErrorCode,
+				vkResp.Error.ErrorMsg,
+				vkResp.Error.RequestParams))
+			return
 		}
 
 		m = message{
@@ -198,7 +223,7 @@ func newMessage(m message) error {
 
 	sendMessageURL := APIRequest(sendMessageAPI)
 
-	log.Println(sendMessageURL)
+	//log.Println(sendMessageURL)
 
 	resp, err := http.Post(sendMessageURL, "application/x-www-form-urlencoded", strings.NewReader(data))
 	defer resp.Body.Close()
@@ -212,7 +237,15 @@ func newMessage(m message) error {
 		return err
 	}
 
-	log.Println(string(body))
+	var vkResp vkResponse
+	if err = json.Unmarshal(body, &vkResp); err != nil {
+		return err
+	}
+
+	if vkResp.Error.ErrorCode != 0 {
+		return fmt.Errorf("sendMessage error: %d: %s\n %v",
+			vkResp.Error.ErrorCode, vkResp.Error.ErrorMsg, vkResp.Error.RequestParams)
+	}
 
 	return err
 }

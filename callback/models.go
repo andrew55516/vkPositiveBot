@@ -10,6 +10,15 @@ type Encoding interface {
 	URLEncoded() url.Values
 }
 
+type vkResponse struct {
+	Response int `json:"response"`
+	Error    struct {
+		ErrorCode     int         `json:"error_code"`
+		ErrorMsg      string      `json:"error_msg"`
+		RequestParams interface{} `json:"request_params"`
+	} `json:"error"`
+}
+
 type callback struct {
 	GroupID int64  `json:"group_id"`
 	Type    string `json:"type"`
