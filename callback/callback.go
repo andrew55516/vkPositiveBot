@@ -64,7 +64,7 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 
 		m = callback.Object.Message
 
-	case "group_join":
+	case "group_join", "message_allow":
 		_, err = fmt.Fprintf(w, "ok")
 		if err != nil {
 			sendErrMsg(err)
@@ -136,7 +136,6 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		sendErrMsg(err)
 	}
-
 }
 
 func callbackConfirmation(groupID int64) (confCode string, err error) {
