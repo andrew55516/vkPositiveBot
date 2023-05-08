@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"vkPositiveBot/utils"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 	getCallbackConfirmationCodeAPI = "https://api.vk.com/method/groups.getCallbackConfirmationCode"
 	EventAnswerAPI                 = "https://api.vk.com/method/messages.sendMessageEventAnswer"
 	API_VERSION                    = "5.131"
-	startMessage                   = "Привет, я бот для поднятия настроения!"
+	startMessage                   = "Привет &#9995;, я бот для поднятия настроения!\nВыбери одну из нескольких комманд на клавиатуре &#128519;"
 )
 
 func HandleCallback(w http.ResponseWriter, r *http.Request) {
@@ -155,16 +156,25 @@ func newMessage(m message) error {
 		keyboardKey = "start"
 
 	case "cat", "dog":
-		// TODO: cat/dog pic
-		responseMessage.Message = "https://images.unsplash.com/photo-1583083527882-4bee9aba2eea?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Nnx8Y3V0ZSUyMGNhdHxlbnwwfHwwfHw%3D&auto=format&fit=crop&w=500&q=60"
+		imgURL, err := utils.GetRandomPicture(fmt.Sprintf("cute %s", m.Text))
+		if err != nil {
+			return err
+		}
+		responseMessage.Attachment = imgURL
 
 	case "quote":
-		// TODO: quote
-		responseMessage.Message = "some quote..."
+		quote, err := utils.GetRandomQuote()
+		if err != nil {
+			return err
+		}
+		responseMessage.Message = quote
 
 	case "birthday", "new year":
-		// TODO: birthday or new year
-		responseMessage.Message = "happy birthday or new year!"
+		greeting, err := utils.GetRandomGreeting(m.Text)
+		if err != nil {
+			return err
+		}
+		responseMessage.Message = greeting
 
 	default:
 		if _, ok := messagesText[m.Text]; ok {

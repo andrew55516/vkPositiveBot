@@ -40,6 +40,16 @@ var keyboards = map[string]keyboard{
 				{
 					Action: action{
 						Type:    "callback",
+						Label:   "музыка",
+						Payload: "{\"button\": \"music\"}",
+					},
+					Color: "positive",
+				},
+			},
+			{
+				{
+					Action: action{
+						Type:    "callback",
 						Label:   "предсказать будущее",
 						Payload: "{\"button\": \"future\"}",
 					},
@@ -78,7 +88,7 @@ var keyboards = map[string]keyboard{
 						Label:   "в главное меню",
 						Payload: "{\"button\": \"start\"}",
 					},
-					Color: "positive",
+					Color: "primary",
 				},
 			},
 		},
@@ -113,7 +123,7 @@ var keyboards = map[string]keyboard{
 						Label:   "в главное меню",
 						Payload: "{\"button\": \"start\"}",
 					},
-					Color: "positive",
+					Color: "primary",
 				},
 			},
 		},
@@ -148,7 +158,7 @@ var keyboards = map[string]keyboard{
 						Label:   "в главное меню",
 						Payload: "{\"button\": \"start\"}",
 					},
-					Color: "positive",
+					Color: "primary",
 				},
 			},
 		},
@@ -183,7 +193,6 @@ var keyboards = map[string]keyboard{
 						Link:  "https://github.com/andrew55516",
 						Label: "github",
 					},
-					//Color: "positive",
 				},
 			},
 			{
@@ -193,7 +202,41 @@ var keyboards = map[string]keyboard{
 						Label:   "в главное меню",
 						Payload: "{\"button\": \"start\"}",
 					},
-					Color: "positive",
+					Color: "primary",
+				},
+			},
+		},
+	},
+
+	"music": {
+		Inline:  true,
+		OneTime: false,
+		Buttons: [][]button{
+			{
+				{
+					Action: action{
+						Type:  "open_link",
+						Link:  "https://music.yandex.ru/users/andryusha.axenoff/playlists/1010",
+						Label: "спокойная",
+					},
+				},
+			},
+			{
+				{
+					Action: action{
+						Type:  "open_link",
+						Link:  "https://music.yandex.ru/users/andryusha.axenoff/playlists/1002",
+						Label: "заряд энергии",
+					},
+				},
+			},
+			{
+				{
+					Action: action{
+						Type:  "open_link",
+						Link:  "https://music.yandex.ru/users/andryusha.axenoff/playlists/1005",
+						Label: "что-то среднее",
+					},
 				},
 			},
 		},

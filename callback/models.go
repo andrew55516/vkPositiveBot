@@ -36,10 +36,11 @@ type message struct {
 }
 
 type sendMessage struct {
-	UserID   int64  `json:"user_id"`
-	RandomID int32  `json:"random_id"`
-	PeerID   int64  `json:"peer_id"`
-	Message  string `json:"message"`
+	UserID     int64  `json:"user_id"`
+	RandomID   int32  `json:"random_id"`
+	PeerID     int64  `json:"peer_id"`
+	Message    string `json:"message"`
+	Attachment string `json:"attachment"`
 }
 
 type callbackConfirmationResponse struct {
@@ -82,7 +83,13 @@ type eventData struct {
 
 func (m sendMessage) URLEncoded() url.Values {
 	data := url.Values{}
-	data.Add("message", m.Message)
+	if m.Message != "" {
+		data.Add("message", m.Message)
+	}
+
+	if m.Attachment != "" {
+		data.Add("attachment", m.Attachment)
+	}
 
 	if m.PeerID != 0 {
 		data.Add("peer_id", fmt.Sprint(m.PeerID))
