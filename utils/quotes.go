@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func GetRandomQuote() (string, error) {
@@ -21,6 +22,7 @@ func GetRandomQuote() (string, error) {
 
 	quoteNodes := doc.Find(`p[class="blockquote-text"]`).Nodes
 
+	rand.Seed(time.Now().UnixNano())
 	quote := quoteNodes[rand.Intn(len(quoteNodes))].FirstChild.Attr[1].Val
 
 	quote = strings.TrimPrefix(quote, "Подробная цитата ")

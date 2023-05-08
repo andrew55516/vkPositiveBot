@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func GetRandomPicture(searchStr string) (string, error) {
@@ -26,6 +27,7 @@ func GetRandomPicture(searchStr string) (string, error) {
 
 	imgNodes := doc.Find(`div[class="MorZF"]`).Nodes
 
+	rand.Seed(time.Now().UnixNano())
 	imgURL := imgNodes[rand.Intn(len(imgNodes))].FirstChild.Attr[3].Val
 
 	return imgURL, nil

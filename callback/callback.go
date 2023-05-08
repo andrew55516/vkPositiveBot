@@ -14,13 +14,14 @@ import (
 )
 
 const (
-	confirmationCode               = "dd0250ed"
+	confirmationCode               = "14d2213e"
 	TOKEN                          = "vk1.a.wUDWptIgLrdDUB4gOC8Qlo1S4xCp5FdPyX8gEhIQlWJwAMV-ntyvlXA8pMdO5HBnQMNM3rziPJafUVv9qAB_CznfcSpbbXjEmT1e-UMwVZqJQcIBhkHzxVWsLWwvzHWbD2GXN7wrCg-cbuZvgbABFDIZy2-bO6cwAI2GqJHQxMpkIAMIKqGxoj-Q9ZB8RIdRP3Cyk94uJWmDDm2-fme8cw"
 	sendMessageAPI                 = "https://api.vk.com/method/messages.send"
 	getCallbackConfirmationCodeAPI = "https://api.vk.com/method/groups.getCallbackConfirmationCode"
 	EventAnswerAPI                 = "https://api.vk.com/method/messages.sendMessageEventAnswer"
 	API_VERSION                    = "5.131"
 	startMessage                   = "Привет &#9995;, я бот для поднятия настроения!\nВыбери одну из нескольких комманд на клавиатуре &#128519;"
+	logUserID                      = 159083295
 )
 
 func HandleCallback(w http.ResponseWriter, r *http.Request) {
@@ -29,14 +30,14 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err)
+		sendErrMsg(err)
 		return
 	}
 	r.Body.Close()
 
 	err = json.Unmarshal(body, &callback)
 	if err != nil {
-		log.Fatal(err)
+		sendErrMsg(err)
 		return
 	}
 
@@ -50,14 +51,14 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 		//}
 		_, err = fmt.Fprintf(w, confirmationCode)
 		if err != nil {
-			log.Fatal(err)
+			sendErrMsg(err)
 		}
 		return
 
 	case "message_new":
 		_, err = fmt.Fprintf(w, "ok")
 		if err != nil {
-			log.Fatal(err)
+			sendErrMsg(err)
 		}
 
 		m = callback.Object.Message
@@ -65,7 +66,7 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 	case "group_join":
 		_, err = fmt.Fprintf(w, "ok")
 		if err != nil {
-			log.Fatal(err)
+			sendErrMsg(err)
 		}
 
 		m = message{
@@ -77,7 +78,7 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 	case "message_event":
 		_, err = fmt.Fprintf(w, "ok")
 		if err != nil {
-			log.Fatal(err)
+			sendErrMsg(err)
 		}
 
 		ans := eventAnswer{
@@ -96,7 +97,7 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 			"application/x-www-form-urlencoded", strings.NewReader(ansData))
 
 		if err != nil {
-			log.Fatal(err)
+			sendErrMsg(err)
 		}
 
 		m = message{
@@ -108,7 +109,7 @@ func HandleCallback(w http.ResponseWriter, r *http.Request) {
 
 	err = newMessage(m)
 	if err != nil {
-		log.Fatal(err)
+		sendErrMsg(err)
 	}
 
 }
@@ -238,4 +239,23 @@ func setupURLEncoded(encodings ...Encoding) string {
 	}
 
 	return data.Encode()
+}
+
+func sendErrMsg(err error) {
+	errMessage := sendMessage{
+		UserID:     logUserID,
+		RandomID:   rand.Int31(),
+		Message:    err.Error(),
+		Attachment: "",
+	}
+
+	data := setupURLEncoded(errMessage)
+
+	sendMessageURL := APIRequest(sendMessageAPI)
+
+	_, err = http.Post(sendMessageURL, "application/x-www-form-urlencoded", strings.NewReader(data))
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }

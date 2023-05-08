@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -32,6 +33,7 @@ func GetRandomGreeting(searchStr string) (string, error) {
 
 	greetingNodes := doc.Find(`p[class="sfst"]`).Nodes
 
+	rand.Seed(time.Now().UnixNano())
 	greeting := greetingNodes[rand.Intn(len(greetingNodes))]
 	greetingStr := doc.Find(fmt.Sprintf(`#%s`, greeting.Attr[0].Val)).Text()
 
