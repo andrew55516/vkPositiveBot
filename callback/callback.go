@@ -212,6 +212,7 @@ func newMessage(m message) error {
 
 		} else {
 			responseMessage.Message = messagesText["help"]
+			keyboardKey = "start"
 		}
 	}
 
